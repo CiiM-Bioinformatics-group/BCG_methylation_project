@@ -12,4 +12,4 @@ Link to the paper: [to be added]
 * a. EWAS script of BCG effect: 
 * b. EWAS script of cytokine responses:
 * c. Prediction model and variance explained:
-* d. DNA methylation changes and protein changes:
+* d. Mediation analysis
