@@ -9,7 +9,7 @@ Contact: Cancan Qi, tracyqican@gmail.com <br>
 Link to the paper: [to be added]
 
 ## Main script include
-* a. EWAS script of BCG effect: 
-* b. EWAS script of cytokine responses:
-* c. Prediction model and variance explained:
+* a. QC of DNA methylation data
+* b. EWAS of cytokine responses and BCG effect
+* c. variance explained
 * d. Mediation analysis
