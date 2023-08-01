@@ -703,7 +703,7 @@ write.xlsx(result, file = "output/IFN_v1_methy_rlm_mval_trimmed.xlsx")
 
 
 
-############################## Step 2.4: associations between urate change and trained immunity ###############
+############################## Step 2.4: associations between DNA methylation change and trained immunity ###############
 
 # we calculated the DNA methylation change between every two time points ########
 load("mv1.t.rata") ## time 1 DNA methylation M value matrix
@@ -838,7 +838,86 @@ result$lambda <- lambda
 save(result, file = "IFNg_all_v3_v1_methy_regress_trim.rdata")
 
 
+############################################### Step 3 #######################################################
+### variance explained by data from different layers
 
+### 3.1 functions
+### select features associated with INFg
+pheno.assoc<-function(dat){
+  res<-c()
+  for(i in colnames(dat)){
+    cor.tmp<-cor.test(input.pheno$INFg,dat[,i],method = "spearman")
+    tmp.res<-data.frame(mt=i,cor=cor.tmp$estimate,p=cor.tmp$p.value)
+    res<-rbind(res,tmp.res) 
+  }
+  return(res)
+}
+
+### select features that are highly correlated with each other to remove colinearity
+indep.assoc<-function(dat){
+  id<-colnames(dat)
+  res.cor<-c()
+  for(i in 1:(length(id)-1)){
+    for(j in (i+1):length(id)){
+      cor.tmp<-cor.test(dat[,i],dat[,j],method = "spearman")
+      tmp.res<-data.frame(f1=colnames(dat)[i],f2=colnames(dat)[j],cor=cor.tmp$estimate,p=cor.tmp$p.value)
+      res.cor<-rbind(res.cor,tmp.res)
+    }
+  }
+  return(res.cor)
+}
+
+### remove highly correlated features and get independent features
+get.indep<-function(cor.pheno,cor.feature){
+  cor.feature$p1<-cor.pheno$p[match(cor.feature$f1,cor.pheno$mt)]
+  cor.feature$p2<-cor.pheno$p[match(cor.feature$f2,cor.pheno$mt)]
+  
+  check<-cor.feature[which(abs(cor.feature$cor)>0.4),]
+  if(dim(check)[1]==0){
+    mt.remove<-c()
+  }else{
+    mt.remove<-c()
+    for(i in 1:dim(check)[1]){
+      ifelse(check$p1[i]>check$p1[i],id.remove<-check$f1[i],id.remove<-check$f2[i])
+      mt.remove<-c(mt.remove,id.remove)
+    }
+  }
+  return(mt.remove)
+}
+
+### Calculate the variance explained
+ev.ml <- function(y, x, return.type="r.squared") {
+    if (!is.null(x)) {
+        if (class(x) == "numeric") {
+            model <- lm(y ~ x)
+        } else {
+            model <- lm(y ~ ., data=x)
+        }
+        if (return.type=="r.squared") {
+            return (summary(model)$adj.r.squared)
+        } else if (return.type == "model") {
+            return (model)
+        }
+    }
+}
+
+### plot 
+layers=c("age+sex","age+sex+PRS","age+sex+PRS+protein","age+sex+PRS+metabolites","age+sex+PRS+DNAm","age+sex+PRS+protein+metabolites+DNAm")
+df.plot<-data.frame(layer=layers,
+                    VE=c(ve.age.sex,ve.age.sex.prs,ve.age.sex.prs,ve.mt,ve.DNAm,ve.all))
+
+df.plot$layer<-factor(df.plot$layer,levels = layers )
+
+ggplot(data=df.plot, aes(x=layer, y=VE,fill=layer)) +
+  geom_bar(stat="identity")+
+  xlab("Data layer")+
+  ylab("Variance explained of INFg")+
+  scale_fill_npg()+
+  theme_bw()+
+  theme(legend.position = "bottom")+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  guides(fill=guide_legend(ncol = 2))
 
 
 ############################################### Step 4 #######################################################
